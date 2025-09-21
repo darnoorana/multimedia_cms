@@ -16,7 +16,8 @@ from .models import SiteSettings, Newsletter, ContactMessage
 from content.models import Playlist, PlaylistItem, Category
 from blog.models import Post
 from projects.models import Project
-
+from django.views import View
+from django.http import HttpResponse
 
 class HomeView(TemplateView):
     """الصفحة الرئيسية"""
@@ -303,3 +304,20 @@ def custom_500(request):
         'page_title': _('خطأ في الخادم'),
     }
     return render(request, 'core/500.html', context, status=500)
+
+# إضف هذا في core/views.py
+from django.http import HttpResponse
+
+class PlaceholderRSSView(View):
+    """RSS placeholder مؤقت"""
+    def get(self, request):
+        rss_content = '''<?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0">
+            <channel>
+                <title>منصة المحتوى التعليمي</title>
+                <description>RSS Feed قريباً</description>
+                <link>https://moslheen.pythonanywhere.com/</link>
+            </channel>
+        </rss>'''
+        return HttpResponse(rss_content, content_type='application/rss+xml')
+

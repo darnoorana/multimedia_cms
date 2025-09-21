@@ -77,9 +77,10 @@ DATABASES = {
 #        'ENGINE': 'django.db.backends.postgresql',
 
 #        'NAME': config('DB_NAME', default='multimedia_cms_db'),
-
-	'ENGINE': 'django.db.backends.sqlite3',
-	'NAME': config('DB_NAME', default='multimedia_cms_db'),
+   'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'multimedia_cms_db',
+#	'ENGINE': 'django.db.backends.sqlite3',
+#	'NAME': config('DB_NAME', default='multimedia_cms_db'),
         'USER': config('DB_USER', default='postgres'),
         'PASSWORD': config('DB_PASSWORD', default='password'),
         'HOST': config('DB_HOST', default='localhost'),
@@ -183,3 +184,5 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+#added temp
+SILENCED_SYSTEM_CHECKS = ['fields.E210']

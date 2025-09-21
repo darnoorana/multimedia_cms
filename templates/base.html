@@ -60,9 +60,11 @@
     
     <!-- RSS Feed -->
     {% if site_settings.rss_enabled %}
-    <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{% url 'core:rss_feed' %}">
-    {% endif %}
-    
+	  {% url 'core:rss_feed' as rss_url %}
+	  {% if rss_url %}
+          <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{% url 'core:rss_feed' %}">
+  	  {% endif %}
+    {% endif %}    
     {% block extra_head %}{% endblock %}
 </head>
 
