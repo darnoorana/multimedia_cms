@@ -1,0 +1,455 @@
+<!-- templates/content/playlist_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ playlist.title }} - {{ site_settings.site_name }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% block meta_keywords %}{{ meta_keywords }}{% endblock %}
+
+{% block og_title %}{{ playlist.title }}{% endblock %}
+{% block og_description %}{{ playlist.description|truncatewords:20 }}{% endblock %}
+{% block og_image %}{% if playlist.thumbnail %}{{ playlist.thumbnail.url }}{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="bg-light py-2">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                {% for item in breadcrumb %}
+                    {% if item.url %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ item.url }}" class="text-decoration-none">{{ item.title }}</a>
+                    </li>
+                    {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <!-- المحتوى الرئيسي -->
+        <div class="col-lg-9">
+            <!-- رأس القائمة -->
+            <div class="playlist-header bg-gradient-primary text-white rounded p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-light text-primary me-2">{{ playlist.category.name }}</span>
+                            {% if playlist.is_featured %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-star-fill me-1"></i>{% trans "مميز" %}
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <h1 class="h2 mb-3">{{ playlist.title }}</h1>
+                        
+                        {% if playlist.description %}
+                        <p class="lead mb-3">{{ playlist.description }}</p>
+                        {% endif %}
+                        
+                        <!-- إحصائيات -->
+                        <div class="d-flex flex-wrap gap-3 text-white-50">
+                            <span>
+                                <i class="bi bi-collection me-1"></i>
+                                {{ playlist.total_items }} {% trans "عنصر" %}
+                            </span>
+                            <span>
+                                <i class="bi bi-eye me-1"></i>
+                                {{ playlist.views_count }} {% trans "مشاهدة" %}
+                            </span>
+                            <span>
+                                <i class="bi bi-calendar me-1"></i>
+                                {{ playlist.created_at|date:"d F Y" }}
+                            </span>
+                            <span>
+                                <i class="bi bi-person me-1"></i>
+                                {{ playlist.created_by.get_full_name|default:playlist.created_by.username }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        {% if playlist.thumbnail %}
+                        <img src="{{ playlist.thumbnail.url }}" alt="{{ playlist.title }}" 
+                             class="img-fluid rounded shadow" style="max-height: 200px;">
+                        {% else %}
+                        <div class="bg-white bg-opacity-25 rounded d-inline-flex align-items-center justify-content-center" 
+                             style="width: 150px; height: 150px;">
+                            <i class="bi bi-collection-play display-1 text-white"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- أزرار العمليات -->
+                        <div class="mt-3">
+                            <button class="btn btn-light me-2" 
+                                    onclick="Utils.shareContent('{{ playlist.title }}', '{{ playlist.description|truncatewords:10 }}', '{{ playlist.get_absolute_url }}')">
+                                <i class="bi bi-share me-1"></i>{% trans "مشاركة" %}
+                            </button>
+                            
+                            {% if playlist.playlistitem_set.exists %}
+                            <a href="{{ playlist.playlistitem_set.first.get_absolute_url }}" class="btn btn-warning">
+                                <i class="bi bi-play-circle me-1"></i>{% trans "بدء التشغيل" %}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إعلان أعلى المحتوى -->
+            {% for ad in content_top_ads %}
+            <div class="advertisement mb-4">
+                {% if ad.type == 'banner' and ad.image %}
+                    {% if ad.link_url %}
+                    <a href="{{ ad.link_url }}" target="_blank">
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                    </a>
+                    {% else %}
+                    <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                    {% endif %}
+                {% elif ad.type == 'text' %}
+                    <div class="text-ad text-center">
+                        <h5>{{ ad.title }}</h5>
+                        <p>{{ ad.text_content }}</p>
+                        {% if ad.link_url %}
+                        <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary">
+                            {{ ad.link_text|default:"اعرف المزيد" }}
+                        </a>
+                        {% endif %}
+                    </div>
+                {% elif ad.type == 'html' %}
+                    {{ ad.html_content|safe }}
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- العلامات -->
+            {% if tags %}
+            <div class="mb-4">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-tags me-1"></i>{% trans "العلامات" %}:
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for tag in tags %}
+                    <a href="{% url 'content:tag_items' tag.slug %}" class="tag-badge">
+                        {{ tag.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- عناصر القائمة -->
+            <div class="playlist-items">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>
+                        <i class="bi bi-list-ol me-2"></i>{% trans "عناصر القائمة" %}
+                    </h3>
+                    <span class="badge bg-secondary">{{ playlist.total_items }} {% trans "عنصر" %}</span>
+                </div>
+
+                {% if playlist_items %}
+                    {% for item in playlist_items %}
+                    <div class="playlist-item-card card mb-3 fade-in">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <!-- رقم العنصر والصورة المصغرة -->
+                                <div class="col-md-2 text-center">
+                                    <div class="position-relative">
+                                        {% if item.thumbnail %}
+                                        <img src="{{ item.thumbnail.url }}" alt="{{ item.title }}" 
+                                             class="rounded" style="width: 80px; height: 60px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                             style="width: 80px; height: 60px;">
+                                            {% if item.content_type == 'youtube' %}
+                                                <i class="fab fa-youtube text-danger"></i>
+                                            {% elif item.content_type == 'soundcloud' %}
+                                                <i class="fab fa-soundcloud text-warning"></i>
+                                            {% elif item.content_type == 'mixed' %}
+                                                <i class="bi bi-collection-play text-primary"></i>
+                                            {% else %}
+                                                <i class="bi bi-file-text text-muted"></i>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary">
+                                            {{ forloop.counter }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- معلومات العنصر -->
+                                <div class="col-md-6">
+                                    <h5 class="card-title mb-2">
+                                        <a href="{{ item.get_absolute_url }}" class="text-decoration-none">
+                                            {{ item.title }}
+                                        </a>
+                                    </h5>
+                                    
+                                    {% if item.content_text %}
+                                    <p class="card-text text-muted small mb-2">
+                                        {{ item.content_text|truncatewords:20 }}
+                                    </p>
+                                    {% endif %}
+                                    
+                                    <!-- نوع المحتوى -->
+                                    <div class="d-flex gap-2 mb-2">
+                                        {% if item.has_video %}
+                                        <span class="badge bg-danger">
+                                            <i class="fab fa-youtube me-1"></i>{% trans "فيديو" %}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.has_audio %}
+                                        <span class="badge bg-warning">
+                                            <i class="fab fa-soundcloud me-1"></i>{% trans "صوت" %}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.has_text %}
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-file-text me-1"></i>{% trans "نص" %}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- إحصائيات مصغرة -->
+                                    <div class="d-flex gap-3 text-muted small">
+                                        <span>
+                                            <i class="bi bi-eye me-1"></i>{{ item.views_count }}
+                                        </span>
+                                        {% if item.youtube_downloads > 0 %}
+                                        <span>
+                                            <i class="bi bi-download me-1"></i>{{ item.youtube_downloads }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- أزرار العمليات -->
+                                <div class="col-md-4">
+                                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                        <a href="{{ item.get_absolute_url }}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-play-circle me-1"></i>{% trans "عرض" %}
+                                        </a>
+                                        
+                                        {% if item.has_video %}
+                                        <button class="btn btn-danger btn-sm" 
+                                                onclick="MediaPlayer.playYoutube('{{ item.youtube_video_id }}', 'player-{{ item.id }}')"
+                                                title="{% trans 'تشغيل الفيديو' %}">
+                                            <i class="fab fa-youtube"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if item.has_audio %}
+                                        <button class="btn btn-warning btn-sm" 
+                                                onclick="MediaPlayer.playSoundcloud('{{ item.soundcloud_url }}', 'player-{{ item.id }}')"
+                                                title="{% trans 'تشغيل الصوت' %}">
+                                            <i class="fab fa-soundcloud"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <button class="btn btn-outline-success btn-sm" 
+                                                onclick="Utils.shareContent('{{ item.title }}', '{{ item.content_text|truncatewords:10 }}', '{{ item.get_absolute_url }}')"
+                                                title="{% trans 'مشاركة' %}">
+                                            <i class="bi bi-share"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- مشغل مدمج -->
+                                    <div id="player-{{ item.id }}" class="mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- إعلان بين العناصر كل 5 عناصر -->
+                    {% if forloop.counter|divisibleby:5 and between_posts_ads %}
+                    <div class="advertisement my-4">
+                        {% for ad in between_posts_ads %}
+                        {% if ad.type == 'banner' and ad.image %}
+                            {% if ad.link_url %}
+                            <a href="{{ ad.link_url }}" target="_blank">
+                                <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                            </a>
+                            {% else %}
+                            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                            {% endif %}
+                        {% elif ad.type == 'text' %}
+                            <div class="text-ad text-center">
+                                <h6>{{ ad.title }}</h6>
+                                <p>{{ ad.text_content }}</p>
+                                {% if ad.link_url %}
+                                <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary btn-sm">
+                                    {{ ad.link_text|default:"اعرف المزيد" }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        {% elif ad.type == 'html' %}
+                            {{ ad.html_content|safe }}
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                    <!-- الترقيم -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-center mt-4">
+                        {% include 'components/pagination.html' with page_obj=playlist_items %}
+                    </div>
+                    {% endif %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-collection display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">{% trans "لا توجد عناصر في هذه القائمة حتى الآن" %}</h4>
+                    <p class="text-muted">{% trans "سيتم إضافة محتوى قريباً" %}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- الشريط الجانبي -->
+        <div class="col-lg-3">
+            <!-- إعلانات الشريط الجانبي -->
+            {% for ad in sidebar_ads %}
+            <div class="sidebar-widget">
+                <div class="advertisement">
+                    {% if ad.type == 'banner' and ad.image %}
+                        {% if ad.link_url %}
+                        <a href="{{ ad.link_url }}" target="_blank">
+                            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                        </a>
+                        {% else %}
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                        {% endif %}
+                    {% elif ad.type == 'text' %}
+                        <div class="text-ad text-center">
+                            <h6>{{ ad.title }}</h6>
+                            <p class="small">{{ ad.text_content }}</p>
+                            {% if ad.link_url %}
+                            <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary btn-sm">
+                                {{ ad.link_text|default:"اعرف المزيد" }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% elif ad.type == 'html' %}
+                        {{ ad.html_content|safe }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- معلومات القائمة -->
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-info-circle me-2"></i>{% trans "معلومات القائمة" %}
+                </h5>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "التصنيف" %}:</span>
+                        <a href="{% url 'content:category_playlists' playlist.category.slug %}" class="text-decoration-none">
+                            {{ playlist.category.name }}
+                        </a>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "عدد العناصر" %}:</span>
+                        <span class="badge bg-primary">{{ playlist.total_items }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "المشاهدات" %}:</span>
+                        <span class="badge bg-success">{{ playlist.views_count }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "تاريخ الإنشاء" %}:</span>
+                        <span>{{ playlist.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "منشأ بواسطة" %}:</span>
+                        <span>{{ playlist.created_by.get_full_name|default:playlist.created_by.username }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قوائم مقترحة -->
+            {% if related_playlists %}
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-collection me-2"></i>{% trans "قوائم مقترحة" %}
+                </h5>
+                <ul class="sidebar-list">
+                    {% for related in related_playlists %}
+                    <li>
+                        <a href="{{ related.get_absolute_url }}" class="d-flex align-items-center">
+                            {% if related.thumbnail %}
+                            <img src="{{ related.thumbnail.url }}" alt="{{ related.title }}" 
+                                 class="rounded me-2" style="width: 50px; height: 40px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary rounded me-2 d-flex align-items-center justify-content-center" 
+                                 style="width: 50px; height: 40px; min-width: 50px;">
+                                <i class="bi bi-collection-play text-white small"></i>
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1 min-width-0">
+                                <div class="fw-medium text-truncate">{{ related.title }}</div>
+                                <small class="text-muted">{{ related.total_items }} {% trans "عنصر" %} • {{ related.views_count }} {% trans "مشاهدة" %}</small>
+                            </div>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تأثير الحركة للعناصر
+    const items = document.querySelectorAll('.playlist-item-card');
+    
+    if ('IntersectionObserver' in window) {
+        const itemObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, index * 50);
+                    itemObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        items.forEach(item => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(20px)';
+            item.style.transition = 'all 0.4s ease-out';
+            itemObserver.observe(item);
+        });
+    }
+
+    // تسجيل مشاهدة القائمة
+    setTimeout(() => {
+        fetch('{% url "content:increment_view_ajax" playlist.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': Utils.getCSRFToken()
+            }
+        }).catch(console.error);
+    }, 3000);
+});
+</script>
+{% endblock %}

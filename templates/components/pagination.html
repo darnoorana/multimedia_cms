@@ -1,0 +1,91 @@
+<!-- templates/components/pagination.html -->
+{% load i18n %}
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="{% trans 'صفحات النتائج' %}">
+    <ul class="pagination">
+        <!-- السابق -->
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+                   aria-label="{% trans 'الصفحة الأولى' %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+                   aria-label="{% trans 'السابق' %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="bi bi-chevron-double-left"></i>
+                </span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="bi bi-chevron-left"></i>
+                </span>
+            </li>
+        {% endif %}
+
+        <!-- أرقام الصفحات -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">{{ num }}</a>
+                </li>
+            {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">{{ num }}</a>
+                </li>
+            {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- التالي -->
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+                   aria-label="{% trans 'التالي' %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+                   aria-label="{% trans 'الصفحة الأخيرة' %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="bi bi-chevron-double-right"></i>
+                </span>
+            </li>
+        {% endif %}
+    </ul>
+    
+    <!-- معلومات الصفحة -->
+    <div class="d-flex justify-content-center mt-2">
+        <small class="text-muted">
+            {% trans "صفحة" %} {{ page_obj.number }} {% trans "من" %} {{ page_obj.paginator.num_pages }}
+            ({{ page_obj.paginator.count }} {% trans "نتيجة إجمالية" %})
+        </small>
+    </div>
+</nav>
+{% endif %}>

@@ -1,0 +1,485 @@
+<!-- templates/content/playlist_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - {{ site_settings.site_name }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="bg-light py-2">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                {% for item in breadcrumb %}
+                    {% if item.url %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ item.url }}" class="text-decoration-none">{{ item.title }}</a>
+                    </li>
+                    {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- إعلان أعلى المحتوى -->
+    {% for ad in content_top_ads %}
+    <div class="advertisement mb-4">
+        {% if ad.type == 'banner' and ad.image %}
+            {% if ad.link_url %}
+            <a href="{{ ad.link_url }}" target="_blank">
+                <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+            </a>
+            {% else %}
+            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+            {% endif %}
+        {% elif ad.type == 'text' %}
+            <div class="text-ad text-center">
+                <h5>{{ ad.title }}</h5>
+                <p>{{ ad.text_content }}</p>
+                {% if ad.link_url %}
+                <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary">
+                    {{ ad.link_text|default:"اعرف المزيد" }}
+                </a>
+                {% endif %}
+            </div>
+        {% elif ad.type == 'html' %}
+            {{ ad.html_content|safe }}
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <div class="row">
+        <!-- المحتوى الرئيسي -->
+        <div class="col-lg-9">
+            <!-- عنوان الصفحة والأدوات -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2">
+                        <i class="bi bi-collection-play-fill me-2 text-primary"></i>
+                        {{ page_title }}
+                    </h1>
+                    {% if search_query %}
+                    <p class="text-muted">
+                        {% trans "نتائج البحث عن" %}: <strong>"{{ search_query }}"</strong>
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- أدوات الفرز -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-sort-down me-1"></i>
+                        {% if current_sort == 'popular' %}{% trans "الأكثر شعبية" %}
+                        {% elif current_sort == 'title' %}{% trans "حسب العنوان" %}
+                        {% elif current_sort == 'oldest' %}{% trans "الأقدم" %}
+                        {% else %}{% trans "الأحدث" %}{% endif %}
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}sort=recent">{% trans "الأحدث" %}</a></li>
+                        <li><a class="dropdown-item" href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}sort=popular">{% trans "الأكثر شعبية" %}</a></li>
+                        <li><a class="dropdown-item" href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}sort=title">{% trans "حسب العنوان" %}</a></li>
+                        <li><a class="dropdown-item" href="?{% if current_category %}category={{ current_category }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}sort=oldest">{% trans "الأقدم" %}</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- فلتر التصنيفات -->
+            {% if categories %}
+            <div class="category-filter mb-4">
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'content:playlist_list' %}{% if search_query %}?q={{ search_query }}{% endif %}" 
+                       class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {% trans "الكل" %}
+                    </a>
+                    {% for category in categories %}
+                    <a href="?category={{ category.slug }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+                       class="btn btn-sm {% if current_category == category.slug %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {{ category.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- قوائم التشغيل -->
+            {% if playlists %}
+            <div class="row g-4">
+                {% for playlist in playlists %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="playlist-card card h-100 fade-in">
+                        <!-- الصورة المصغرة -->
+                        <div class="position-relative">
+                            {% if playlist.thumbnail %}
+                            <img src="{{ playlist.thumbnail.url }}" class="card-img-top" alt="{{ playlist.title }}">
+                            {% else %}
+                            <div class="card-img-top bg-gradient-primary d-flex align-items-center justify-content-center text-white" style="height: 200px;">
+                                <i class="bi bi-collection-play display-1"></i>
+                            </div>
+                            {% endif %}
+
+                            <!-- شارات التمييز -->
+                            {% if playlist.is_featured %}
+                            <span class="position-absolute top-0 start-0 m-2">
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-star-fill me-1"></i>{% trans "مميز" %}
+                                </span>
+                            </span>
+                            {% endif %}
+
+                            <!-- عدد العناصر -->
+                            <span class="position-absolute top-0 end-0 m-2">
+                                <span class="badge bg-dark">
+                                    {{ playlist.total_items }} {% trans "عنصر" %}
+                                </span>
+                            </span>
+                        </div>
+
+                        <!-- محتوى البطاقة -->
+                        <div class="card-body">
+                            <!-- التصنيف -->
+                            <span class="badge bg-primary mb-2">{{ playlist.category.name }}</span>
+                            
+                            <!-- العنوان -->
+                            <h5 class="card-title">
+                                <a href="{{ playlist.get_absolute_url }}" class="text-decoration-none text-dark">
+                                    {{ playlist.title }}
+                                </a>
+                            </h5>
+                            
+                            <!-- الوصف -->
+                            <p class="card-text text-muted">
+                                {{ playlist.description|truncatewords:15 }}
+                            </p>
+                            
+                            <!-- إحصائيات -->
+                            <div class="playlist-meta d-flex justify-content-between align-items-center text-muted small">
+                                <span>
+                                    <i class="bi bi-eye me-1"></i>{{ playlist.views_count }} {% trans "مشاهدة" %}
+                                </span>
+                                <span>
+                                    <i class="bi bi-calendar me-1"></i>{{ playlist.created_at|date:"d M Y" }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- تذييل البطاقة -->
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a href="{{ playlist.get_absolute_url }}" class="btn btn-primary flex-grow-1">
+                                    <i class="bi bi-play-circle me-2"></i>{% trans "عرض القائمة" %}
+                                </a>
+                                <button class="btn btn-outline-success" 
+                                        onclick="Utils.shareContent('{{ playlist.title }}', '{{ playlist.description|truncatewords:10 }}', '{{ playlist.get_absolute_url }}')"
+                                        title="{% trans 'مشاركة' %}">
+                                    <i class="bi bi-share"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- إعلان بين المنشورات -->
+            {% if forloop.counter0|divisibleby:6 and between_posts_ads %}
+            <div class="row mt-4 mb-4">
+                <div class="col-12">
+                    {% for ad in between_posts_ads %}
+                    <div class="advertisement">
+                        {% if ad.type == 'banner' and ad.image %}
+                            {% if ad.link_url %}
+                            <a href="{{ ad.link_url }}" target="_blank">
+                                <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                            </a>
+                            {% else %}
+                            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                            {% endif %}
+                        {% elif ad.type == 'text' %}
+                            <div class="text-ad text-center">
+                                <h5>{{ ad.title }}</h5>
+                                <p>{{ ad.text_content }}</p>
+                                {% if ad.link_url %}
+                                <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary">
+                                    {{ ad.link_text|default:"اعرف المزيد" }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        {% elif ad.type == 'html' %}
+                            {{ ad.html_content|safe }}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- الترقيم -->
+            {% if is_paginated %}
+            <div class="d-flex justify-content-center mt-5">
+                {% include 'components/pagination.html' with page_obj=page_obj %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- رسالة عدم وجود قوائم -->
+            <div class="text-center py-5">
+                <i class="bi bi-collection-play display-1 text-muted mb-3"></i>
+                <h3 class="text-muted mb-3">
+                    {% if search_query %}
+                        {% trans "لا توجد نتائج للبحث" %}
+                    {% else %}
+                        {% trans "لا توجد قوائم تشغيل متاحة حالياً" %}
+                    {% endif %}
+                </h3>
+                {% if search_query %}
+                <p class="text-muted mb-4">{% trans "جرب البحث بكلمات أخرى أو تصفح جميع القوائم" %}</p>
+                <a href="{% url 'content:playlist_list' %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left me-2"></i>{% trans "تصفح جميع القوائم" %}
+                </a>
+                {% else %}
+                <p class="text-muted">{% trans "سيتم إضافة قوائم جديدة قريباً. تابعونا!" %}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- الشريط الجانبي -->
+        <div class="col-lg-3">
+            <!-- إعلانات الشريط الجانبي -->
+            {% for ad in sidebar_ads %}
+            <div class="sidebar-widget">
+                <div class="advertisement">
+                    {% if ad.type == 'banner' and ad.image %}
+                        {% if ad.link_url %}
+                        <a href="{{ ad.link_url }}" target="_blank">
+                            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                        </a>
+                        {% else %}
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                        {% endif %}
+                    {% elif ad.type == 'text' %}
+                        <div class="text-ad text-center">
+                            <h6>{{ ad.title }}</h6>
+                            <p class="small">{{ ad.text_content }}</p>
+                            {% if ad.link_url %}
+                            <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary btn-sm">
+                                {{ ad.link_text|default:"اعرف المزيد" }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% elif ad.type == 'html' %}
+                        {{ ad.html_content|safe }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- البحث السريع -->
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-search me-2"></i>{% trans "البحث السريع" %}
+                </h5>
+                <form action="{% url 'content:playlist_list' %}" method="get">
+                    {% if current_category %}
+                    <input type="hidden" name="category" value="{{ current_category }}">
+                    {% endif %}
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" 
+                               placeholder="{% trans 'ابحث في قوائم التشغيل...' %}" 
+                               value="{{ search_query }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- التصنيفات -->
+            {% if categories %}
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-grid-3x3-gap me-2"></i>{% trans "التصنيفات" %}
+                </h5>
+                <ul class="sidebar-list">
+                    <li>
+                        <a href="{% url 'content:playlist_list' %}" 
+                           class="{% if not current_category %}fw-bold text-primary{% endif %}">
+                            {% trans "جميع التصنيفات" %}
+                        </a>
+                    </li>
+                    {% for category in categories %}
+                    <li>
+                        <a href="{% url 'content:category_playlists' category.slug %}" 
+                           class="{% if current_category == category.slug %}fw-bold text-primary{% endif %}">
+                            {{ category.name }}
+                            <small class="text-muted">({{ category.playlist_set.count }})</small>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- قوائم شائعة -->
+            {% if nav_recent_playlists %}
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-fire me-2"></i>{% trans "قوائم شائعة" %}
+                </h5>
+                <ul class="sidebar-list">
+                    {% for playlist in nav_recent_playlists %}
+                    <li>
+                        <a href="{{ playlist.get_absolute_url }}" class="d-flex align-items-center">
+                            {% if playlist.thumbnail %}
+                            <img src="{{ playlist.thumbnail.url }}" alt="{{ playlist.title }}" 
+                                 class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary rounded me-2 d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; min-width: 40px;">
+                                <i class="bi bi-collection-play text-white small"></i>
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1 min-width-0">
+                                <div class="fw-medium text-truncate">{{ playlist.title }}</div>
+                                <small class="text-muted">{{ playlist.views_count }} {% trans "مشاهدة" %}</small>
+                            </div>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- الاشتراك في النشرة -->
+            {% if site_settings.newsletter_enabled %}
+            <div class="sidebar-widget bg-primary text-white">
+                <h5 class="sidebar-widget-title text-white border-white">
+                    <i class="bi bi-envelope-heart me-2"></i>{% trans "النشرة الإخبارية" %}
+                </h5>
+                <p class="small mb-3">{% trans "احصل على آخر التحديثات مباشرة في بريدك الإلكتروني" %}</p>
+                <form action="{% url 'core:newsletter_subscribe' %}" method="post" class="newsletter-sidebar-form">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="email" name="email" class="form-control" 
+                               placeholder="{% trans 'بريدك الإلكتروني' %}" required>
+                        <button class="btn btn-light" type="submit">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- إعلان أسفل المحتوى -->
+    {% for ad in content_bottom_ads %}
+    <div class="advertisement mt-5">
+        {% if ad.type == 'banner' and ad.image %}
+            {% if ad.link_url %}
+            <a href="{{ ad.link_url }}" target="_blank">
+                <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+            </a>
+            {% else %}
+            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+            {% endif %}
+        {% elif ad.type == 'text' %}
+            <div class="text-ad text-center">
+                <h5>{{ ad.title }}</h5>
+                <p>{{ ad.text_content }}</p>
+                {% if ad.link_url %}
+                <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary">
+                    {{ ad.link_text|default:"اعرف المزيد" }}
+                </a>
+                {% endif %}
+            </div>
+        {% elif ad.type == 'html' %}
+            {{ ad.html_content|safe }}
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تأثير الحركة للبطاقات
+    const cards = document.querySelectorAll('.playlist-card');
+    
+    if ('IntersectionObserver' in window) {
+        const cardObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }, index * 100);
+                    cardObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        cards.forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease-out';
+            cardObserver.observe(card);
+        });
+    }
+
+    // تحسين نموذج النشرة الجانبي
+    const newsletterForm = document.querySelector('.newsletter-sidebar-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[name="email"]').value;
+            const button = this.querySelector('button[type="submit"]');
+            const originalIcon = button.innerHTML;
+
+            if (!email || !Utils.validateEmail(email)) {
+                Utils.showAlert('{% trans "يرجى إدخال بريد إلكتروني صحيح" %}', 'warning');
+                return;
+            }
+
+            // إظهار حالة التحميل
+            button.innerHTML = '<i class="spinner-border spinner-border-sm"></i>';
+            button.disabled = true;
+
+            // إرسال الطلب
+            fetch(this.action, {
+                method: 'POST',
+                body: new FormData(this),
+                headers: {
+                    'X-CSRFToken': Utils.getCSRFToken()
+                }
+            }).then(response => {
+                if (response.ok) {
+                    Utils.showAlert('{% trans "تم الاشتراك بنجاح!" %}', 'success');
+                    this.reset();
+                } else {
+                    Utils.showAlert('{% trans "حدث خطأ أثناء الاشتراك" %}', 'error');
+                }
+            }).catch(error => {
+                Utils.showAlert('{% trans "حدث خطأ في الاتصال" %}', 'error');
+            }).finally(() => {
+                button.innerHTML = originalIcon;
+                button.disabled = false;
+            });
+        });
+    }
+
+    // دالة التحقق من البريد الإلكتروني
+    Utils.validateEmail = function(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+});
+</script>
+{% endblock %}

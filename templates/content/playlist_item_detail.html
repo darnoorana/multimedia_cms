@@ -1,0 +1,534 @@
+<!-- templates/content/playlist_item_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ item.title }} - {{ item.playlist.title }} - {{ site_settings.site_name }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+
+{% block og_title %}{{ item.title }} - {{ item.playlist.title }}{% endblock %}
+{% block og_description %}{{ item.content_text|truncatewords:20|default:item.playlist.description }}{% endblock %}
+{% block og_image %}{% if item.thumbnail %}{{ item.thumbnail.url }}{% elif item.playlist.thumbnail %}{{ item.playlist.thumbnail.url }}{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="bg-light py-2">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                {% for breadcrumb_item in breadcrumb %}
+                    {% if breadcrumb_item.url %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ breadcrumb_item.url }}" class="text-decoration-none">{{ breadcrumb_item.title }}</a>
+                    </li>
+                    {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ breadcrumb_item.title|truncatewords:6 }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <!-- المحتوى الرئيسي -->
+        <div class="col-lg-9">
+            <!-- رأس العنصر -->
+            <div class="playlist-item">
+                <div class="playlist-item-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h1 class="playlist-item-title">{{ item.title }}</h1>
+                            
+                            <!-- معلومات القائمة الأساسية -->
+                            <div class="d-flex align-items-center gap-3 text-white-50 mb-3">
+                                <a href="{{ item.playlist.get_absolute_url }}" class="text-white text-decoration-none">
+                                    <i class="bi bi-collection me-1"></i>{{ item.playlist.title }}
+                                </a>
+                                <span>
+                                    <i class="bi bi-eye me-1"></i>{{ item.views_count }} {% trans "مشاهدة" %}
+                                </span>
+                                <span>
+                                    <i class="bi bi-calendar me-1"></i>{{ item.created_at|date:"d M Y" }}
+                                </span>
+                            </div>
+
+                            <!-- أزرار العمليات -->
+                            <div class="playlist-item-actions">
+                                {% if item.has_video %}
+                                <button class="action-btn youtube" onclick="MediaPlayer.playYoutube('{{ item.youtube_video_id }}', 'main-player')">
+                                    <i class="fab fa-youtube"></i>{% trans "تشغيل الفيديو" %}
+                                </button>
+                                <button class="action-btn youtube" onclick="downloadYoutube({{ item.id }})">
+                                    <i class="bi bi-download"></i>{% trans "تحميل الفيديو" %}
+                                </button>
+                                {% endif %}
+
+                                {% if item.has_audio %}
+                                <button class="action-btn soundcloud" onclick="MediaPlayer.playSoundcloud('{{ item.soundcloud_url }}', 'main-player')">
+                                    <i class="fab fa-soundcloud"></i>{% trans "تشغيل الصوت" %}
+                                </button>
+                                <button class="action-btn soundcloud" onclick="downloadSoundcloud({{ item.id }})">
+                                    <i class="bi bi-download"></i>{% trans "تحميل الصوت" %}
+                                </button>
+                                {% endif %}
+
+                                {% if item.has_text %}
+                                <button class="action-btn copy-text" onclick="copyText('{{ item.content_text|escapejs }}', this)" id="copy-btn-{{ item.id }}">
+                                    <i class="bi bi-copy"></i>{% trans "نسخ النص" %}
+                                </button>
+                                {% endif %}
+
+                                <button class="action-btn share" onclick="shareItem({{ item.id }})">
+                                    <i class="bi bi-share"></i>{% trans "مشاركة" %}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- صورة العنصر -->
+                        {% if item.thumbnail %}
+                        <div class="ms-3">
+                            <img src="{{ item.thumbnail.url }}" alt="{{ item.title }}" 
+                                 class="rounded shadow" style="max-width: 200px; max-height: 150px; object-fit: cover;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- مشغل الوسائط -->
+                <div class="media-player">
+                    <div id="main-player">
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-play-circle display-1 mb-3"></i>
+                            <p>{% trans "اختر نوع الوسائط لبدء التشغيل" %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- المحتوى النصي -->
+                {% if item.has_text %}
+                <div class="content-text">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4>
+                            <i class="bi bi-file-text me-2"></i>{% trans "المحتوى النصي" %}
+                        </h4>
+                        <button class="btn btn-outline-primary btn-sm" onclick="copyText('{{ item.content_text|escapejs }}', this)">
+                            <i class="bi bi-copy me-1"></i>{% trans "نسخ الكل" %}
+                        </button>
+                    </div>
+                    
+                    <div class="content-body">
+                        {{ item.content_text|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- إعلان بين المحتوى -->
+            {% for ad in between_posts_ads %}
+            <div class="advertisement my-4">
+                {% if ad.type == 'banner' and ad.image %}
+                    {% if ad.link_url %}
+                    <a href="{{ ad.link_url }}" target="_blank">
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                    </a>
+                    {% else %}
+                    <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                    {% endif %}
+                {% elif ad.type == 'text' %}
+                    <div class="text-ad text-center">
+                        <h5>{{ ad.title }}</h5>
+                        <p>{{ ad.text_content }}</p>
+                        {% if ad.link_url %}
+                        <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary">
+                            {{ ad.link_text|default:"اعرف المزيد" }}
+                        </a>
+                        {% endif %}
+                    </div>
+                {% elif ad.type == 'html' %}
+                    {{ ad.html_content|safe }}
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- العلامات -->
+            {% if tags %}
+            <div class="my-4">
+                <h6 class="text-muted mb-2">
+                    <i class="bi bi-tags me-1"></i>{% trans "العلامات" %}:
+                </h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for tag in tags %}
+                    <a href="{% url 'content:tag_items' tag.slug %}" class="tag-badge">
+                        {{ tag.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- التنقل بين العناصر -->
+            <div class="navigation-items my-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {% if previous_item %}
+                        <a href="{{ previous_item.get_absolute_url }}" class="btn btn-outline-primary w-100 d-flex align-items-center">
+                            <div class="me-auto">
+                                <i class="bi bi-chevron-left me-2"></i>
+                                <span class="fw-bold">{% trans "السابق" %}</span>
+                            </div>
+                            <div class="text-end ms-2">
+                                <div class="small text-muted">{{ previous_item.title|truncatewords:6 }}</div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="btn btn-outline-secondary w-100 disabled">
+                            <i class="bi bi-chevron-left me-2"></i>{% trans "لا يوجد سابق" %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {% if next_item %}
+                        <a href="{{ next_item.get_absolute_url }}" class="btn btn-outline-primary w-100 d-flex align-items-center">
+                            <div class="text-start me-2">
+                                <div class="small text-muted">{{ next_item.title|truncatewords:6 }}</div>
+                            </div>
+                            <div class="ms-auto">
+                                <span class="fw-bold">{% trans "التالي" %}</span>
+                                <i class="bi bi-chevron-right ms-2"></i>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="btn btn-outline-secondary w-100 disabled">
+                            {% trans "لا يوجد تالي" %}<i class="bi bi-chevron-right ms-2"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم التعليقات -->
+            {% if item.allow_comments %}
+            <div class="comments-section">
+                <h4 class="mb-4">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    {% trans "التعليقات" %} 
+                    {% if comments %}
+                    <span class="badge bg-primary">{{ comments.paginator.count }}</span>
+                    {% endif %}
+                </h4>
+
+                <!-- نموذج إضافة تعليق -->
+                <div class="comment-form">
+                    <h6 class="mb-3">{% trans "أضف تعليقك" %}</h6>
+                    <form action="{% url 'content:add_comment' item.id %}" method="post" class="comment-submission-form">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="text" name="name" class="form-control" placeholder="{% trans 'الاسم *' %}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="email" name="email" class="form-control" placeholder="{% trans 'البريد الإلكتروني *' %}" required>
+                            </div>
+                            <div class="col-12">
+                                <input type="url" name="website" class="form-control" placeholder="{% trans 'موقعك الإلكتروني (اختياري)' %}">
+                            </div>
+                            <div class="col-12">
+                                <textarea name="content" class="form-control" rows="4" placeholder="{% trans 'اكتب تعليقك هنا... *' %}" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send me-2"></i>{% trans "إرسال التعليق" %}
+                                </button>
+                                <small class="text-muted ms-3">{% trans "سيتم مراجعة التعليق قبل النشر" %}</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- عرض التعليقات -->
+                {% if comments %}
+                    {% for comment in comments %}
+                    <div class="comment-item">
+                        <div class="comment-author">
+                            {% if comment.author_website %}
+                            <a href="{{ comment.author_website }}" target="_blank" class="text-decoration-none">
+                                <i class="bi bi-person-circle me-1"></i>{{ comment.author_name }}
+                            </a>
+                            {% else %}
+                            <i class="bi bi-person-circle me-1"></i>{{ comment.author_name }}
+                            {% endif %}
+                        </div>
+                        <div class="comment-date">
+                            <i class="bi bi-clock me-1"></i>{{ comment.created_at|date:"d F Y - H:i" }}
+                        </div>
+                        <div class="comment-content">
+                            {{ comment.content|linebreaks }}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- ترقيم التعليقات -->
+                    {% if comments.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-4">
+                        {% include 'components/pagination.html' with page_obj=comments %}
+                    </div>
+                    {% endif %}
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-chat-dots display-4 mb-3"></i>
+                    <p>{% trans "كن أول من يعلق على هذا المحتوى" %}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- الشريط الجانبي -->
+        <div class="col-lg-3">
+            <!-- معلومات العنصر -->
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-info-circle me-2"></i>{% trans "معلومات العنصر" %}
+                </h5>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "نوع المحتوى" %}:</span>
+                        <span class="badge bg-primary">{{ item.get_content_type_display }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "المشاهدات" %}:</span>
+                        <span class="badge bg-success">{{ item.views_count }}</span>
+                    </div>
+                    {% if item.youtube_downloads > 0 %}
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "تحميلات يوتيوب" %}:</span>
+                        <span class="badge bg-danger">{{ item.youtube_downloads }}</span>
+                    </div>
+                    {% endif %}
+                    {% if item.soundcloud_downloads > 0 %}
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "تحميلات ساوند كلاود" %}:</span>
+                        <span class="badge bg-warning">{{ item.soundcloud_downloads }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="list-group-item d-flex justify-content-between">
+                        <span>{% trans "تاريخ الإنشاء" %}:</span>
+                        <span>{{ item.created_at|date:"d M Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات القائمة -->
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-collection me-2"></i>{% trans "من القائمة" %}
+                </h5>
+                <div class="d-flex align-items-center p-3 bg-light rounded">
+                    {% if item.playlist.thumbnail %}
+                    <img src="{{ item.playlist.thumbnail.url }}" alt="{{ item.playlist.title }}" 
+                         class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-primary rounded me-3 d-flex align-items-center justify-content-center" 
+                         style="width: 60px; height: 60px;">
+                        <i class="bi bi-collection-play text-white"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            <a href="{{ item.playlist.get_absolute_url }}" class="text-decoration-none">
+                                {{ item.playlist.title|truncatewords:6 }}
+                            </a>
+                        </h6>
+                        <small class="text-muted">
+                            {{ item.playlist.category.name }} • {{ item.playlist.total_items }} {% trans "عنصر" %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- عناصر مقترحة -->
+            {% if related_items %}
+            <div class="sidebar-widget">
+                <h5 class="sidebar-widget-title">
+                    <i class="bi bi-bookmark me-2"></i>{% trans "عناصر مقترحة" %}
+                </h5>
+                <ul class="sidebar-list">
+                    {% for related in related_items %}
+                    <li>
+                        <a href="{{ related.get_absolute_url }}" class="d-flex align-items-center">
+                            {% if related.thumbnail %}
+                            <img src="{{ related.thumbnail.url }}" alt="{{ related.title }}" 
+                                 class="rounded me-2" style="width: 50px; height: 40px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                                 style="width: 50px; height: 40px; min-width: 50px;">
+                                {% if related.content_type == 'youtube' %}
+                                    <i class="fab fa-youtube text-danger"></i>
+                                {% elif related.content_type == 'soundcloud' %}
+                                    <i class="fab fa-soundcloud text-warning"></i>
+                                {% elif related.content_type == 'mixed' %}
+                                    <i class="bi bi-collection-play text-primary"></i>
+                                {% else %}
+                                    <i class="bi bi-file-text text-muted"></i>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1 min-width-0">
+                                <div class="fw-medium text-truncate">{{ related.title }}</div>
+                                <small class="text-muted">{{ related.views_count }} {% trans "مشاهدة" %}</small>
+                            </div>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- إعلانات الشريط الجانبي -->
+            {% for ad in sidebar_ads %}
+            <div class="sidebar-widget">
+                <div class="advertisement">
+                    {% if ad.type == 'banner' and ad.image %}
+                        {% if ad.link_url %}
+                        <a href="{{ ad.link_url }}" target="_blank">
+                            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                        </a>
+                        {% else %}
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="img-fluid">
+                        {% endif %}
+                    {% elif ad.type == 'text' %}
+                        <div class="text-ad text-center">
+                            <h6>{{ ad.title }}</h6>
+                            <p class="small">{{ ad.text_content }}</p>
+                            {% if ad.link_url %}
+                            <a href="{{ ad.link_url }}" target="_blank" class="btn btn-primary btn-sm">
+                                {{ ad.link_text|default:"اعرف المزيد" }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% elif ad.type == 'html' %}
+                        {{ ad.html_content|safe }}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// وظائف التحميل والتفاعل
+async function downloadYoutube(itemId) {
+    try {
+        const response = await fetch(`{% url 'content:youtube_download' 0 %}`.replace('0', itemId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': Utils.getCSRFToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Utils.showAlert(data.message, 'success');
+            setTimeout(() => {
+                window.open(data.download_url, '_blank');
+            }, 1000);
+            
+            MediaPlayer.recordInteraction('youtube_download', itemId);
+        } else {
+            Utils.showAlert(data.error, 'error');
+        }
+    } catch (error) {
+        Utils.showAlert('{% trans "حدث خطأ أثناء التحميل" %}', 'error');
+    }
+}
+
+async function downloadSoundcloud(itemId) {
+    try {
+        const response = await fetch(`{% url 'content:soundcloud_download' 0 %}`.replace('0', itemId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': Utils.getCSRFToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Utils.showAlert(data.message, 'success');
+            setTimeout(() => {
+                window.open(data.download_url, '_blank');
+            }, 1000);
+            
+            MediaPlayer.recordInteraction('soundcloud_download', itemId);
+        } else {
+            Utils.showAlert(data.error, 'error');
+        }
+    } catch (error) {
+        Utils.showAlert('{% trans "حدث خطأ أثناء التحميل" %}', 'error');
+    }
+}
+
+async function copyText(text, buttonElement) {
+    const success = await MediaPlayer.copyText(text, buttonElement);
+    if (success) {
+        MediaPlayer.recordInteraction('text_copy', {{ item.id }});
+    }
+}
+
+async function shareItem(itemId) {
+    try {
+        const response = await fetch(`{% url 'content:share' 0 %}`.replace('0', itemId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': Utils.getCSRFToken()
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Utils.shareContent(data.share_data.title, data.share_data.description, data.share_data.url);
+        } else {
+            Utils.showAlert(data.error, 'error');
+        }
+    } catch (error) {
+        Utils.showAlert('{% trans "حدث خطأ أثناء المشاركة" %}', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // تسجيل مشاهدة العنصر
+    setTimeout(() => {
+        MediaPlayer.recordInteraction('view', {{ item.id }});
+    }, 5000);
+
+    // معالجة نموذج التعليق
+    const commentForm = document.querySelector('.comment-submission-form');
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            CommentSystem.submitComment(this);
+        });
+    }
+
+    // تشغيل الوسائط تلقائياً إذا كان هناك نوع واحد فقط
+    const hasVideo = {{ item.has_video|yesno:"true,false" }};
+    const hasAudio = {{ item.has_audio|yesno:"true,false" }};
+    
+    if (hasVideo && !hasAudio) {
+        MediaPlayer.playYoutube('{{ item.youtube_video_id }}', 'main-player');
+    } else if (hasAudio && !hasVideo) {
+        MediaPlayer.playSoundcloud('{{ item.soundcloud_url }}', 'main-player');
+    }
+});
+</script>
+{% endblock %}

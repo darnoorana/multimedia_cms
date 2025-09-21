@@ -1,0 +1,409 @@
+<!-- templates/base.html -->
+{% load static %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- SEO Meta Tags -->
+    <title>{% block title %}{{ site_settings.site_name }}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ site_settings.site_description }}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{{ site_settings.meta_keywords }}{% endblock %}">
+    <meta name="author" content="د. علي بشير أحمد">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}{{ site_settings.site_name }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_settings.site_description }}{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% if site_settings.site_logo %}{{ site_settings.site_logo.url }}{% endif %}{% endblock %}">
+    <meta property="og:site_name" content="{{ site_settings.site_name }}">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_settings.site_name }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_settings.site_description }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if site_settings.site_logo %}{{ site_settings.site_logo.url }}{% endif %}{% endblock %}">
+    
+    <!-- Favicon -->
+    {% if site_settings.site_favicon %}
+    <link rel="icon" type="image/x-icon" href="{{ site_settings.site_favicon.url }}">
+    {% endif %}
+    
+    <!-- Bootstrap CSS -->
+    {% if LANGUAGE_CODE == 'ar' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - Tajawal for Arabic, Inter for English -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {% if LANGUAGE_CODE == 'ar' %}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    {% else %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% endif %}
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    <!-- RSS Feed -->
+    {% if site_settings.rss_enabled %}
+    <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="{% url 'core:rss_feed' %}">
+    {% endif %}
+    
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <!-- Header Navigation -->
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <!-- Brand -->
+                <a class="navbar-brand d-flex align-items-center" href="{% url 'core:home' %}">
+                    {% if site_settings.site_logo %}
+                    <img src="{{ site_settings.site_logo.url }}" alt="{{ site_settings.site_name }}" height="32" class="me-2">
+                    {% endif %}
+                    <span class="fw-bold">{{ site_settings.site_name }}</span>
+                </a>
+
+                <!-- Mobile Toggle -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Navigation Menu -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:home' %}">
+                                <i class="bi bi-house-fill me-1"></i>{% trans "الرئيسية" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'content:playlist_list' %}">
+                                <i class="bi bi-collection-play-fill me-1"></i>{% trans "قوائم التشغيل" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'blog:post_list' %}">
+                                <i class="bi bi-journal-text me-1"></i>{% trans "المدونة" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'projects:project_list' %}">
+                                <i class="bi bi-briefcase-fill me-1"></i>{% trans "المشاريع" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:about' %}">
+                                <i class="bi bi-info-circle-fill me-1"></i>{% trans "من نحن" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:contact' %}">
+                                <i class="bi bi-envelope-fill me-1"></i>{% trans "اتصل بنا" %}
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Search Form -->
+                    <form class="d-flex me-3" action="{% url 'core:search' %}" method="get">
+                        <input class="form-control me-2" type="search" name="q" placeholder="{% trans 'البحث...' %}" value="{{ request.GET.q }}">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+
+                    <!-- Language Selector -->
+                    <div class="dropdown me-3">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-globe me-1"></i>
+                            {% if LANGUAGE_CODE == 'ar' %}العربية{% else %}English{% endif %}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'core:language' %}?lang=ar">العربية</a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:language' %}?lang=en">English</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- User Account -->
+                    {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-fill me-1"></i>{{ user.first_name|default:user.username }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">{% trans "الملف الشخصي" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">{% trans "تسجيل الخروج" %}</a></li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a class="btn btn-outline-light" href="{% url 'accounts:login' %}">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>{% trans "تسجيل الدخول" %}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Breadcrumb -->
+    {% block breadcrumb %}{% endblock %}
+
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        <!-- Alerts/Messages -->
+        {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Page Content -->
+        {% block content %}
+        <!-- Default placeholder content will be replaced by specific page content -->
+        <div class="container my-5">
+            <div class="row">
+                <div class="col-12">
+                    <h1>{% trans "مرحباً بكم في منصة المحتوى المتعدد الوسائط" %}</h1>
+                    <p class="lead">{% trans "هذا المحتوى سيتم استبداله في الصفحات المحددة" %}</p>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <!-- معلومات الموقع -->
+                <div class="col-lg-4 mb-4">
+                    <h5 class="fw-bold mb-3">{{ site_settings.site_name }}</h5>
+                    <p>{{ site_settings.site_description }}</p>
+                    
+                    <!-- وسائل التواصل الاجتماعي -->
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if site_settings.facebook_url %}
+                        <a href="{{ site_settings.facebook_url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.twitter_url %}
+                        <a href="{{ site_settings.twitter_url }}" class="btn btn-outline-info btn-sm" target="_blank">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.youtube_url %}
+                        <a href="{{ site_settings.youtube_url }}" class="btn btn-outline-danger btn-sm" target="_blank">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.instagram_url %}
+                        <a href="{{ site_settings.instagram_url }}" class="btn btn-outline-warning btn-sm" target="_blank">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.telegram_url %}
+                        <a href="{{ site_settings.telegram_url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="fab fa-telegram"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.soundcloud_url %}
+                        <a href="{{ site_settings.soundcloud_url }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                            <i class="fab fa-soundcloud"></i>
+                        </a>
+                        {% endif %}
+                        {% if site_settings.tiktok_url %}
+                        <a href="{{ site_settings.tiktok_url }}" class="btn btn-outline-dark btn-sm" target="_blank">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- روابط سريعة -->
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">{% trans "روابط سريعة" %}</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'core:home' %}" class="text-light text-decoration-none">{% trans "الرئيسية" %}</a></li>
+                        <li><a href="{% url 'content:playlist_list' %}" class="text-light text-decoration-none">{% trans "قوائم التشغيل" %}</a></li>
+                        <li><a href="{% url 'blog:post_list' %}" class="text-light text-decoration-none">{% trans "المدونة" %}</a></li>
+                        <li><a href="{% url 'projects:project_list' %}" class="text-light text-decoration-none">{% trans "المشاريع" %}</a></li>
+                        <li><a href="{% url 'core:about' %}" class="text-light text-decoration-none">{% trans "من نحن" %}</a></li>
+                        <li><a href="{% url 'core:contact' %}" class="text-light text-decoration-none">{% trans "اتصل بنا" %}</a></li>
+                    </ul>
+                </div>
+
+                <!-- معلومات قانونية -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">{% trans "معلومات مهمة" %}</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'core:privacy' %}" class="text-light text-decoration-none">{% trans "سياسة الخصوصية" %}</a></li>
+                        <li><a href="{% url 'core:terms' %}" class="text-light text-decoration-none">{% trans "شروط الاستخدام" %}</a></li>
+                        {% if site_settings.rss_enabled %}
+                        <li><a href="{% url 'core:rss_feed' %}" class="text-light text-decoration-none">{% trans "RSS Feed" %}</a></li>
+                        {% endif %}
+                        <li><a href="/sitemap.xml" class="text-light text-decoration-none">{% trans "خريطة الموقع" %}</a></li>
+                    </ul>
+                </div>
+
+                <!-- النشرة الإخبارية -->
+                {% if site_settings.newsletter_enabled %}
+                <div class="col-lg-3 mb-4">
+                    <h6 class="fw-bold mb-3">{% trans "النشرة الإخبارية" %}</h6>
+                    <p class="small">{% trans "اشترك للحصول على آخر التحديثات" %}</p>
+                    <form action="{% url 'core:newsletter_subscribe' %}" method="post">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="email" name="email" class="form-control" placeholder="{% trans 'بريدك الإلكتروني' %}" required>
+                            <button class="btn btn-primary" type="submit">{% trans "اشتراك" %}</button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- معلومات الاتصال -->
+            <div class="row border-top pt-4 mt-4">
+                <div class="col-md-8">
+                    <h6 class="fw-bold mb-2">{% trans "معلومات الاتصال" %}</h6>
+                    <p class="mb-1">
+                        <i class="bi bi-person-fill me-2"></i>{% trans "د. علي بشير أحمد" %}
+                    </p>
+                    {% if site_settings.contact_whatsapp %}
+                    <p class="mb-1">
+                        <i class="fab fa-whatsapp me-2"></i>
+                        {% trans "للتواصل عبر الواتس آب فقط" %}: 
+                        <a href="https://wa.me/{{ site_settings.contact_whatsapp }}" class="text-light">{{ site_settings.contact_whatsapp }}</a>
+                    </p>
+                    {% endif %}
+                    {% if site_settings.contact_email %}
+                    <p class="mb-0">
+                        <i class="bi bi-envelope-fill me-2"></i>
+                        <a href="mailto:{{ site_settings.contact_email }}" class="text-light">{{ site_settings.contact_email }}</a>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <small class="text-muted">
+                        © {% now "Y" %} {{ site_settings.site_name }}. {% trans "جميع الحقوق محفوظة" %}.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Ads Placeholder - سيتم إضافة الإعلانات هنا لاحقاً -->
+    {% block ads %}{% endblock %}
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (مطلوب للتفاعل مع AJAX) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    <!-- Web Share API Support -->
+    <script>
+    // دالة المشاركة عبر Web Share API
+    function shareContent(title, text, url) {
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                text: text,
+                url: url
+            }).catch(console.error);
+        } else {
+            // Fallback للمتصفحات التي لا تدعم Web Share API
+            const shareData = encodeURIComponent(text + ' ' + url);
+            const shareUrl = `https://wa.me/?text=${shareData}`;
+            window.open(shareUrl, '_blank');
+        }
+    }
+
+    // دالة نسخ النص
+    function copyText(text) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('{% trans "تم نسخ النص بنجاح" %}', 'success');
+            }).catch(() => {
+                showAlert('{% trans "فشل في نسخ النص" %}', 'error');
+            });
+        } else {
+            // Fallback للمتصفحات القديمة
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showAlert('{% trans "تم نسخ النص بنجاح" %}', 'success');
+            } catch (err) {
+                showAlert('{% trans "فشل في نسخ النص" %}', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    }
+
+    // دالة عرض التنبيهات
+    function showAlert(message, type = 'info') {
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'error' ? 'alert-danger' : 'alert-info';
+        
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                 style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+        
+        // إزالة التنبيه تلقائياً بعد 3 ثوانٍ
+        setTimeout(() => {
+            const alert = document.querySelector('.alert.position-fixed');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 3000);
+    }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+
+    <!-- Google Analytics (يمكن إضافة الكود لاحقاً) -->
+    {% comment %}
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+    {% endcomment %}
+</body>
+</html>

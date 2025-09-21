@@ -1,0 +1,76 @@
+# content/urls.py
+
+from django.urls import path
+from django.utils.translation import gettext_lazy as _
+from . import views
+from .views import media_views  
+app_name = 'content'
+
+
+urlpatterns = [
+    # URLs الأساسية (الموجودة مسبقاً)
+    path('', views.PlaylistListView.as_view(), name='playlist_list'),
+    path(_('category/<slug:category_slug>/'), views.CategoryPlaylistsView.as_view(), name='category_playlists'),
+    path(_('playlist/<slug:slug>/'), views.PlaylistDetailView.as_view(), name='playlist_detail'),
+    path(_('playlist/<slug:playlist_slug>/<slug:item_slug>/'), 
+         views.PlaylistItemDetailView.as_view(), name='item_detail'),
+    
+    # العلامات
+    path(_('tag/<slug:tag_slug>/'), views.TagView.as_view(), name='tag_items'),
+    path(_('tags/'), views.TagListView.as_view(), name='tag_list'),
+    
+    # التفاعل مع المحتوى (الموجودة مسبقاً)
+    path(_('item/<int:item_id>/download-youtube/'), 
+         views.YoutubeDownloadView.as_view(), name='youtube_download'),
+    path(_('item/<int:item_id>/download-soundcloud/'), 
+         views.SoundcloudDownloadView.as_view(), name='soundcloud_download'),
+    path(_('item/<int:item_id>/copy-text/'), 
+         views.CopyTextView.as_view(), name='copy_text'),
+    path(_('item/<int:item_id>/share/'), 
+         views.ShareView.as_view(), name='share'),
+    
+    # التعليقات
+    path(_('item/<int:item_id>/add-comment/'), 
+         views.AddCommentView.as_view(), name='add_comment'),
+    path(_('comment/<int:comment_id>/delete/'), 
+         views.DeleteCommentView.as_view(), name='delete_comment'),
+
+    # === URLs الجديدة للوسائط المتقدمة ===
+    
+    # معلومات الوسائط
+    path('api/youtube-info/<str:video_id>/', 
+         media_views.YouTubeInfoView.as_view(), name='youtube_info'),
+    path('api/soundcloud-info/', 
+         media_views.SoundCloudInfoView.as_view(), name='soundcloud_info'),
+    
+    # تحميل الوسائط المتقدم
+    path('api/media-download/<int:item_id>/', 
+         media_views.MediaDownloadView.as_view(), name='media_download'),
+    
+    # التنقل في قوائم التشغيل
+    path('api/playlist-nav/<int:item_id>/<str:direction>/', 
+         media_views.PlaylistNavigationView.as_view(), name='playlist_navigation'),
+    
+    # تصدير قوائم التشغيل
+    path('export/<slug:playlist_slug>/<str:format_type>/', 
+         media_views.PlaylistExportView.as_view(), name='playlist_export'),
+    
+    # بروكسي الوسائط
+    path('media-proxy/<int:item_id>/<str:media_type>/', 
+         media_views.MediaProxyView.as_view(), name='media_proxy'),
+    
+    # رفع الوسائط
+    path('api/media-upload/', 
+         media_views.MediaUploadView.as_view(), name='media_upload'),
+    
+    # إنشاء waveform
+    path('api/generate-waveform/<int:item_id>/', 
+         media_views.WaveformGeneratorView.as_view(), name='generate_waveform'),
+         
+    # AJAX Views (الموجودة مسبقاً مع تحسينات)
+    path('ajax/increment-view/<int:item_id>/', 
+         views.IncrementViewAjax.as_view(), name='increment_view_ajax'),
+    path('ajax/toggle-like/<int:item_id>/', 
+         views.ToggleLikeAjax.as_view(), name='toggle_like_ajax'),
+
+]

@@ -1,0 +1,20 @@
+
+# المتطلبات الأساسية الموجودة مسبقاً
+Django==5.0.6
+psycopg2-binary
+django-crispy-forms
+crispy-bootstrap5
+pillow
+python-decouple
+celery
+redis
+requests
+
+# متطلبات جديدة للوسائط المتقدمة
+yt-dlp>=2023.7.6              # تحميل من YouTube/SoundCloud
+ffmpeg-python>=0.2.0          # معالجة الوسائط
+mutagen>=1.47.0              # metadata للملفات الصوتية
+Pillow>=10.0.0               # معالجة الصور (تحديث)
+python-magic>=0.4.27         # تحديد نوع الملفات
+djangorestframework>=3.14.0   # REST API (اختياري)
+

@@ -1,0 +1,5 @@
+
+multimedia_cms_project# apt install -y libjpeg-dev zlib1g-dev libpng-dev
+((playlist_venv) ) multimedia_cms_project# pip install --force-reinstall --no-cache-dir Pillow
+
+

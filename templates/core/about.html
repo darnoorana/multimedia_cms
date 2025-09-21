@@ -1,0 +1,107 @@
+# templates/core/about.html
+
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}من نحن - {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary mb-4">من نحن</h1>
+                <p class="lead">تعرف على منصة المحتوى التعليمي والترفيهي</p>
+            </div>
+            
+            <div class="row align-items-center mb-5">
+                <div class="col-md-6">
+                    <h2 class="h3 mb-4">د. علي بشير أحمد</h2>
+                    <p class="mb-3">
+                        أهلاً وسهلاً بكم في منصتي للمحتوى التعليمي والترفيهي المتعدد الوسائط. 
+                        أسعى من خلال هذه المنصة إلى تقديم محتوى عالي الجودة يساعدكم في التعلم والتطوير الشخصي والمهني.
+                    </p>
+                    <p class="mb-3">
+                        تحتوي المنصة على مجموعة متنوعة من:
+                    </p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>فيديوهات تعليمية تفاعلية</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>مقاطع صوتية مفيدة</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>مقالات ونصوص تعليمية</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>مشاريع تفاعلية</li>
+                    </ul>
+                </div>
+                <div class="col-md-6 text-center">
+                    {% if site_settings.site_logo %}
+                    <img src="{{ site_settings.site_logo.url }}" alt="د. علي بشير أحمد" 
+                         class="img-fluid rounded-circle shadow" style="max-width: 250px;">
+                    {% else %}
+                    <div class="bg-primary rounded-circle mx-auto d-flex align-items-center justify-content-center" 
+                         style="width: 250px; height: 250px;">
+                        <i class="bi bi-person-circle text-white" style="font-size: 8rem;"></i>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="bg-light rounded p-4 mb-5">
+                <h3 class="h4 mb-3">رسالتنا</h3>
+                <p>
+                    نسعى لتقديم محتوى تعليمي وترفيهي متميز يساهم في بناء مجتمع واعي ومثقف، 
+                    من خلال استخدام أحدث التقنيات في عرض وتقديم المحتوى بطريقة تفاعلية وممتعة.
+                </p>
+            </div>
+            
+            <div class="row text-center mb-5">
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 h-100">
+                        <div class="card-body">
+                            <i class="bi bi-lightbulb text-warning display-1 mb-3"></i>
+                            <h5 class="card-title">محتوى تعليمي</h5>
+                            <p class="card-text">نقدم محتوى تعليمي متنوع يغطي مختلف المجالات والاهتمامات</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 h-100">
+                        <div class="card-body">
+                            <i class="bi bi-people text-primary display-1 mb-3"></i>
+                            <h5 class="card-title">مجتمع تفاعلي</h5>
+                            <p class="card-text">نبني مجتمعاً تفاعلياً يشارك الأفكار والخبرات</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 h-100">
+                        <div class="card-body">
+                            <i class="bi bi-award text-success display-1 mb-3"></i>
+                            <h5 class="card-title">جودة عالية</h5>
+                            <p class="card-text">نحرص على تقديم محتوى عالي الجودة ومراجع موثوقة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <h3 class="h4 mb-4">تواصل معنا</h3>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    {% if site_settings.contact_whatsapp %}
+                    <a href="https://wa.me/{{ site_settings.contact_whatsapp }}" class="btn btn-success" target="_blank">
+                        <i class="fab fa-whatsapp me-2"></i>واتساب
+                    </a>
+                    {% endif %}
+                    {% if site_settings.telegram_url %}
+                    <a href="{{ site_settings.telegram_url }}" class="btn btn-primary" target="_blank">
+                        <i class="fab fa-telegram me-2"></i>تيليجرام
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'core:contact' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-envelope me-2"></i>راسلنا
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

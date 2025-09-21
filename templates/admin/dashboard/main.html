@@ -1,0 +1,775 @@
+<!-- templates/admin/dashboard/main.html -->
+{% extends 'admin/base_site.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}لوحة التحكم الرئيسية{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.0.0/dist/chart.min.js" rel="preconnect">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+}
+
+.stat-card .stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.stat-card .stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.stat-card .stat-change {
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
+.stat-card .stat-change.positive {
+    color: #4ade80;
+}
+
+.stat-card .stat-change.negative {
+    color: #f87171;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: #f8fafc;
+    transition: background-color 0.2s ease;
+}
+
+.activity-item:hover {
+    background: #e2e8f0;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 12px;
+    font-size: 1.2rem;
+}
+
+.activity-icon.primary { background: #dbeafe; color: #1d4ed8; }
+.activity-icon.success { background: #d1fae5; color: #047857; }
+.activity-icon.warning { background: #fef3c7; color: #d97706; }
+.activity-icon.info { background: #ddd6fe; color: #7c3aed; }
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1f2937;
+}
+
+.activity-meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.alert-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border-right: 4px solid;
+}
+
+.alert-warning { 
+    background: #fefce8; 
+    border-color: #eab308;
+    color: #854d0e;
+}
+
+.alert-info { 
+    background: #eff6ff; 
+    border-color: #3b82f6;
+    color: #1e40af;
+}
+
+.alert-primary { 
+    background: #f0f9ff; 
+    border-color: #06b6d4;
+    color: #0e7490;
+}
+
+.alert-secondary { 
+    background: #f8fafc; 
+    border-color: #64748b;
+    color: #475569;
+}
+
+.system-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.system-info-item:last-child {
+    border-bottom: none;
+}
+
+.system-info-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.system-info-value {
+    color: #6b7280;
+    font-family: monospace;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #374151;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.quick-action-btn i {
+    margin-left: 8px;
+    font-size: 1.2rem;
+}
+
+.realtime-stats {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    z-index: 1000;
+    min-width: 200px;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .dashboard-card {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-main">
+    <!-- Real-time Stats -->
+    <div class="realtime-stats" id="realtime-stats">
+        <div><i class="bi bi-circle-fill text-success"></i> النظام متصل</div>
+        <div id="realtime-data">جاري التحميل...</div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">
+                <i class="bi bi-speedometer2 me-2"></i>لوحة التحكم الرئيسية
+            </h1>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card stat-card" style="--primary-color: #3b82f6; --secondary-color: #1d4ed8;">
+                <div class="stat-number">{{ stats.content.total_playlists }}</div>
+                <div class="stat-label">قوائم التشغيل</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-arrow-up"></i> +{{ stats.growth.content_growth }}% هذا الشهر
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card stat-card" style="--primary-color: #10b981; --secondary-color: #047857;">
+                <div class="stat-number">{{ stats.content.total_items|floatformat:0 }}</div>
+                <div class="stat-label">عناصر المحتوى</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-check-circle"></i> {{ stats.content.publish_rate }}% منشور
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card stat-card" style="--primary-color: #f59e0b; --secondary-color: #d97706;">
+                <div class="stat-number">{{ stats.engagement.total_views|floatformat:0 }}</div>
+                <div class="stat-label">إجمالي المشاهدات</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-eye"></i> {{ stats.engagement.avg_views_per_item }} متوسط لكل عنصر
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="dashboard-card stat-card" style="--primary-color: #8b5cf6; --secondary-color: #7c3aed;">
+                <div class="stat-number">{{ stats.community.newsletter_subscribers }}</div>
+                <div class="stat-label">مشتركو النشرة</div>
+                <div class="stat-change positive">
+                    <i class="bi bi-arrow-up"></i> +{{ stats.growth.subscriber_growth }}% هذا الشهر
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-graph-up me-2"></i>إحصائيات المشاهدات (آخر 30 يوم)
+                </h5>
+                <div class="chart-container">
+                    <canvas id="viewsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-pie-chart me-2"></i>أنواع المحتوى
+                </h5>
+                <div class="chart-container">
+                    <canvas id="contentTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engagement & Categories Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-heart me-2"></i>معدلات التفاعل
+                </h5>
+                <div class="chart-container">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-folder me-2"></i>أفضل التصنيفات
+                </h5>
+                <div class="chart-container">
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity & Alerts -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-activity me-2"></i>النشاط الأخير
+                </h5>
+                <div class="activity-list" style="max-height: 400px; overflow-y: auto;">
+                    {% for activity in recent_activity %}
+                    <div class="activity-item">
+                        <div class="activity-icon {{ activity.color }}">
+                            <i class="{{ activity.icon }}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ activity.title }}</div>
+                            <div class="activity-meta">
+                                {{ activity.user }} • {{ activity.time|timesince }} مضت
+                            </div>
+                        </div>
+                        {% if activity.url %}
+                        <a href="{{ activity.url }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox display-1 mb-3"></i>
+                        <p>لا يوجد نشاط حالياً</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Alerts -->
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-bell me-2"></i>التنبيهات والمهام
+                </h5>
+                <div class="alerts-list">
+                    {% for alert in alerts %}
+                    <div class="alert-item alert-{{ alert.type }}">
+                        <div class="d-flex align-items-center">
+                            <i class="{{ alert.icon }} me-2"></i>
+                            <span>{{ alert.title }}</span>
+                        </div>
+                        {% if alert.action %}
+                        <a href="{{ alert.action }}" class="btn btn-sm btn-outline-dark">
+                            عرض
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-check-circle display-4 mb-2"></i>
+                        <p>لا توجد تنبيهات</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="dashboard-card mt-3">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-info-circle me-2"></i>معلومات النظام
+                </h5>
+                <div class="system-info">
+                    <div class="system-info-item">
+                        <div class="system-info-label">Django</div>
+                        <div class="system-info-value">{{ system_info.django_version }}</div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="system-info-label">Python</div>
+                        <div class="system-info-value">{{ system_info.python_version }}</div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="system-info-label">قاعدة البيانات</div>
+                        <div class="system-info-value">{{ system_info.database }}</div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="system-info-label">وضع التطوير</div>
+                        <div class="system-info-value">
+                            {% if system_info.debug_mode %}
+                            <span class="badge bg-warning">مفعل</span>
+                            {% else %}
+                            <span class="badge bg-success">معطل</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="system-info-item">
+                        <div class="system-info-label">وقت الخادم</div>
+                        <div class="system-info-value">{{ system_info.server_time }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">
+                    <i class="bi bi-lightning me-2"></i>إجراءات سريعة
+                </h5>
+                <div class="quick-actions">
+                    <a href="{% url 'admin:content_playlist_add' %}" class="quick-action-btn">
+                        <i class="bi bi-plus-circle"></i>
+                        إنشاء قائمة تشغيل
+                    </a>
+                    <a href="{% url 'admin:content_playlistitem_add' %}" class="quick-action-btn">
+                        <i class="bi bi-file-plus"></i>
+                        إضافة محتوى
+                    </a>
+                    <a href="{% url 'admin:blog_post_add' %}" class="quick-action-btn">
+                        <i class="bi bi-journal-plus"></i>
+                        كتابة مقال
+                    </a>
+                    <a href="{% url 'admin:core_sitesettings_change' 1 %}" class="quick-action-btn">
+                        <i class="bi bi-gear"></i>
+                        إعدادات الموقع
+                    </a>
+                    <a href="/admin-analytics/" class="quick-action-btn">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        التحليلات المتقدمة
+                    </a>
+                    <a href="#" onclick="createBackup()" class="quick-action-btn">
+                        <i class="bi bi-cloud-download"></i>
+                        نسخة احتياطية
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script>
+// بيانات الرسوم البيانية من Django
+const chartsData = {{ charts_data|safe }};
+
+// رسم المشاهدات
+const viewsCtx = document.getElementById('viewsChart').getContext('2d');
+new Chart(viewsCtx, {
+    type: 'line',
+    data: {
+        labels: chartsData.views_chart.map(item => item.label),
+        datasets: [{
+            label: 'المشاهدات',
+            data: chartsData.views_chart.map(item => item.views),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: '#f1f5f9'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// رسم أنواع المحتوى
+const contentTypeCtx = document.getElementById('contentTypeChart').getContext('2d');
+new Chart(contentTypeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: chartsData.content_chart.map(item => item.label),
+        datasets: [{
+            data: chartsData.content_chart.map(item => item.count),
+            backgroundColor: [
+                '#3b82f6',
+                '#10b981',
+                '#f59e0b',
+                '#ef4444',
+                '#8b5cf6'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// رسم التفاعل
+const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+new Chart(engagementCtx, {
+    type: 'bar',
+    data: {
+        labels: chartsData.engagement_chart.map(item => item.label),
+        datasets: [{
+            data: chartsData.engagement_chart.map(item => item.value),
+            backgroundColor: '#10b981',
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: '#f1f5f9'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// رسم التصنيفات
+const categoriesCtx = document.getElementById('categoriesChart').getContext('2d');
+new Chart(categoriesCtx, {
+    type: 'bar',
+    data: {
+        labels: chartsData.categories_chart.map(item => item.name),
+        datasets: [{
+            data: chartsData.categories_chart.map(item => item.count),
+            backgroundColor: chartsData.categories_chart.map(item => item.color),
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: '#f1f5f9'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+});
+
+// تحديث الإحصائيات المباشرة
+function updateRealTimeStats() {
+    fetch('/admin-ajax-stats/?type=real_time')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('realtime-data').innerHTML = `
+                <div>المستخدمون المتصلون: ${data.online_users}</div>
+                <div>الجلسات النشطة: ${data.active_sessions}</div>
+                <div>المشاهدات الحالية: ${data.current_views}</div>
+                <div>حمل الخادم: ${data.server_load}%</div>
+            `;
+        })
+        .catch(error => {
+            console.error('خطأ في تحديث الإحصائيات المباشرة:', error);
+        });
+}
+
+// تحديث كل 30 ثانية
+setInterval(updateRealTimeStats, 30000);
+updateRealTimeStats();
+
+// وظائف الإجراءات السريعة
+function createBackup() {
+    if (confirm('هل تريد إنشاء نسخة احتياطية كاملة؟ قد يستغرق هذا بعض الوقت.')) {
+        document.getElementById('loading-overlay').style.display = 'flex';
+        
+        // محاكاة إنشاء نسخة احتياطية
+        fetch('/admin/backup/create/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type: 'full',
+                include_media: true
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading-overlay').style.display = 'none';
+            
+            if (data.success) {
+                alert('تم إنشاء النسخة الاحتياطية بنجاح!');
+            } else {
+                alert('فشل في إنشاء النسخة الاحتياطية: ' + data.error);
+            }
+        })
+        .catch(error => {
+            document.getElementById('loading-overlay').style.display = 'none';
+            alert('حدث خطأ: ' + error.message);
+        });
+    }
+}
+
+// دالة الحصول على CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// تأثيرات الحركة
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة تأثير الظهور للبطاقات
+    const cards = document.querySelectorAll('.dashboard-card');
+    
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }, index * 100);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+
+    cards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+
+    // تحديث العداد في الإحصائيات
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        let currentValue = 0;
+        const increment = finalValue / 50;
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                stat.textContent = finalValue.toLocaleString();
+                clearInterval(timer);
+            } else {
+                stat.textContent = Math.floor(currentValue).toLocaleString();
+            }
+        }, 30);
+    });
+});
+</script>
+{% endblock %}

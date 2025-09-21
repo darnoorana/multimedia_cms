@@ -1,0 +1,147 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}اتصل بنا - {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary mb-4">اتصل بنا</h1>
+                <p class="lead">نحن سعداء لتلقي رسائلكم واستفساراتكم</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fab fa-whatsapp text-success display-1 mb-3"></i>
+                            <h5>واتساب</h5>
+                            <p class="text-muted mb-3">للتواصل السريع والمباشر</p>
+                            {% if site_settings.contact_whatsapp %}
+                            <a href="https://wa.me/{{ site_settings.contact_whatsapp }}" 
+                               class="btn btn-success" target="_blank">
+                                {{ site_settings.contact_whatsapp }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="bi bi-envelope text-primary display-1 mb-3"></i>
+                            <h5>البريد الإلكتروني</h5>
+                            <p class="text-muted mb-3">للاستفسارات الرسمية</p>
+                            {% if site_settings.contact_email %}
+                            <a href="mailto:{{ site_settings.contact_email }}" class="btn btn-primary">
+                                {{ site_settings.contact_email }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if site_settings.telegram_url %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <i class="fab fa-telegram text-info display-1 mb-3"></i>
+                            <h5>تيليجرام</h5>
+                            <p class="text-muted mb-3">انضم إلى قناتنا للحصول على آخر التحديثات</p>
+                            <a href="{{ site_settings.telegram_url }}" class="btn btn-info" target="_blank">
+                                انضم إلى التيليجرام
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="card border-0 shadow-sm mt-5">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">أرسل رسالة</h3>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="contactForm">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_name" class="form-label">الاسم الكامل *</label>
+                                <input type="text" class="form-control" id="id_name" name="name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_email" class="form-label">البريد الإلكتروني *</label>
+                                <input type="email" class="form-control" id="id_email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_phone" class="form-label">رقم الهاتف</label>
+                            <input type="tel" class="form-control" id="id_phone" name="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_subject" class="form-label">الموضوع *</label>
+                            <input type="text" class="form-control" id="id_subject" name="subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_message" class="form-label">الرسالة *</label>
+                            <textarea class="form-control" id="id_message" name="message" rows="5" required></textarea>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="bi bi-send me-2"></i>إرسال الرسالة
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-md-4 text-center mb-4">
+                    <div class="border rounded p-4 h-100">
+                        <i class="bi bi-clock text-primary display-4 mb-3"></i>
+                        <h5>ساعات العمل</h5>
+                        <p class="text-muted mb-0">الأحد - الخميس<br>9:00 ص - 6:00 م</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="border rounded p-4 h-100">
+                        <i class="bi bi-reply text-success display-4 mb-3"></i>
+                        <h5>وقت الاستجابة</h5>
+                        <p class="text-muted mb-0">نقوم بالرد على الرسائل<br>خلال 24 ساعة</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center mb-4">
+                    <div class="border rounded p-4 h-100">
+                        <i class="bi bi-headset text-info display-4 mb-3"></i>
+                        <h5>الدعم الفني</h5>
+                        <p class="text-muted mb-0">فريق الدعم متاح<br>للمساعدة دائماً</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>جارٍ الإرسال...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}
