@@ -19,6 +19,24 @@ from projects.models import Project
 from django.views import View
 from django.http import HttpResponse
 
+
+
+
+
+# طرق أخرى للحصول على LANGUAGE_SESSION_KEY
+try:
+    # Django 4.2+
+    from django.conf import settings
+    LANGUAGE_SESSION_KEY = settings.LANGUAGE_SESSION_KEY
+except AttributeError:
+    try:
+        # Django <= 4.1
+        from django.utils.translation import LANGUAGE_SESSION_KEY
+    except ImportError:
+        # Fallback - القيمة الافتراضية
+        LANGUAGE_SESSION_KEY = '_language'
+
+
 class HomeView(TemplateView):
     """الصفحة الرئيسية"""
     template_name = 'core/home.html'
@@ -246,7 +264,8 @@ class LanguageView(TemplateView):
         
         if language in dict(settings.LANGUAGES):
             translation.activate(language)
-            request.session[translation.LANGUAGE_SESSION_KEY] = language
+#            request.session[translation.LANGUAGE_SESSION_KEY] = language
+            request.session['django_language'] = language
         
         return redirect(request.META.get('HTTP_REFERER', 'core:home'))
 
@@ -321,3 +340,21 @@ class PlaceholderRSSView(View):
         </rss>'''
         return HttpResponse(rss_content, content_type='application/rss+xml')
 
+
+# Alternative implementation using function-based view
+def switch_language(request):
+    """
+    Function-based view for language switching
+    """
+    language = request.GET.get('lang')
+    next_url = request.GET.get('next', request.META.get('HTTP_REFERER', '/'))
+    
+    if language and language in dict(settings.LANGUAGES).keys():
+        translation.activate(language)
+        request.session[LANGUAGE_SESSION_KEY] = language
+        
+        response = HttpResponseRedirect(next_url)
+        response.set_cookie(settings.LANGUAGE_COOKIE_NAME, language)
+        return response
+    
+    return HttpResponseRedirect(next_url)
